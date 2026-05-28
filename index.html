@@ -1,0 +1,1532 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BI 综合价值看板 Demo</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #fff;
+      --ink: #17202a;
+      --muted: #657386;
+      --line: #dce3ee;
+      --soft: #f8fafc;
+      --nav: #111827;
+      --blue: #2563eb;
+      --green: #15803d;
+      --amber: #b45309;
+      --red: #b42318;
+      --cyan: #0e7490;
+      --violet: #6d28d9;
+      --shadow: 0 14px 36px rgba(15, 23, 42, .08);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      letter-spacing: 0;
+    }
+
+    .shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 264px minmax(0, 1fr);
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      background: var(--nav);
+      color: #f8fafc;
+      padding: 22px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .brand {
+      display: grid;
+      gap: 8px;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #fff;
+      color: #111827;
+      font-weight: 800;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.25;
+      font-weight: 780;
+    }
+
+    .brand p {
+      margin: 0;
+      color: #cbd5e1;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    nav {
+      display: grid;
+      gap: 7px;
+    }
+
+    nav button {
+      width: 100%;
+      border: 0;
+      border-radius: 7px;
+      padding: 11px 12px;
+      background: transparent;
+      color: #dbe4f0;
+      text-align: left;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    nav button:hover,
+    nav button.active {
+      background: #1f2937;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .side-note {
+      margin-top: auto;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 8px;
+      padding: 12px;
+      color: #cbd5e1;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .side-note b {
+      display: block;
+      color: #fff;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    .side-note span {
+      display: block;
+      color: #93a4ba;
+      font-size: 11px;
+      margin-bottom: 5px;
+    }
+
+    main {
+      padding: 24px 30px 38px;
+      min-width: 0;
+    }
+
+    .page {
+      display: none;
+      gap: 18px;
+    }
+
+    .page.active {
+      display: grid;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+    }
+
+    .title-block h2 {
+      margin: 0;
+      font-size: 25px;
+      line-height: 1.25;
+      font-weight: 790;
+    }
+
+    .title-block p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      max-width: 900px;
+    }
+
+    .source-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .source-pill a {
+      color: var(--blue);
+      font-weight: 730;
+      text-decoration: none;
+    }
+
+    .source-pill a:hover {
+      text-decoration: underline;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .two { grid-template-columns: 1fr 1fr; }
+    .wide-left { grid-template-columns: 1.25fr .75fr; }
+    .wide-right { grid-template-columns: .82fr 1.18fr; }
+
+    .panel,
+    .metric,
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .panel { padding: 16px; }
+
+    .metric {
+      min-height: 118px;
+      padding: 15px;
+      display: grid;
+      align-content: space-between;
+      gap: 12px;
+    }
+
+    .metric .label,
+    .eyebrow {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .metric .value {
+      font-size: 28px;
+      line-height: 1;
+      font-weight: 820;
+    }
+
+    .metric .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .section-head h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 770;
+    }
+
+    .section-head span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .card {
+      padding: 15px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .card h4 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip,
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .chip { background: #eef2f7; color: #394150; }
+    .chip.blue { background: #e7efff; color: #1d4ed8; }
+    .chip.green { background: #e8f6ee; color: #166534; }
+    .chip.amber { background: #fff3df; color: #92400e; }
+    .chip.red { background: #fee9e7; color: #991b1b; }
+    .chip.cyan { background: #e4f6fb; color: #0e7490; }
+    .chip.violet { background: #f1e9ff; color: #6d28d9; }
+
+    .status { font-weight: 730; }
+    .status.ok { background: #e8f6ee; color: #166534; }
+    .status.gap { background: #fee9e7; color: #991b1b; }
+    .status.better { background: #e7efff; color: #1d4ed8; }
+    .status.same { background: #eef2f7; color: #344054; }
+    .status.plan { background: #fff3df; color: #92400e; }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .toolbar button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: #344054;
+      border-radius: 8px;
+      min-height: 34px;
+      padding: 0 11px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .toolbar button.active {
+      border-color: var(--blue);
+      background: #e7efff;
+      color: #1d4ed8;
+      font-weight: 730;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    th,
+    td {
+      text-align: left;
+      border-bottom: 1px solid #edf1f6;
+      padding: 11px 9px;
+      vertical-align: top;
+      font-size: 12px;
+      line-height: 1.48;
+    }
+
+    th {
+      color: #475467;
+      font-weight: 730;
+      background: var(--soft);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    td { color: #2f3a4a; }
+
+    .table-wrap {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: auto;
+      max-height: 520px;
+    }
+
+    .info-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .info-row {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fff;
+      display: grid;
+      gap: 7px;
+    }
+
+    .info-row b {
+      font-size: 13px;
+    }
+
+    .info-row span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .qa-list,
+    .step-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .qa-item,
+    .step-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px;
+      background: #fff;
+      display: grid;
+      gap: 8px;
+    }
+
+    .qa-item h4,
+    .step-item h4 {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .qa-item p,
+    .step-item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .bar-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 106px 1fr 48px;
+      gap: 10px;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .bar {
+      height: 10px;
+      background: #edf1f6;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar > i {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+    }
+
+    .task-list {
+      display: grid;
+      gap: 9px;
+      max-height: 560px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .task {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fff;
+      display: grid;
+      gap: 8px;
+    }
+
+    .task h4 {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .task-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 88px 1fr 48px;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .mini-matrix {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .foot {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1080px) {
+      .shell { grid-template-columns: 1fr; }
+      aside { position: static; height: auto; }
+      nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .metrics, .three, .two, .wide-left, .wide-right, .mini-matrix { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; }
+      .source-pill { white-space: normal; }
+      main { padding: 20px 16px 30px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand">
+        <div class="brand-mark">BI</div>
+        <h1>BI 综合价值看板</h1>
+        <p>面向销售、售前、客户成功的 BI 2.0 推广与学习看板。</p>
+      </div>
+      <nav aria-label="看板页面">
+        <button class="active" data-page="overview">总览</button>
+        <button data-page="value">价值地图</button>
+        <button data-page="features">功能清单</button>
+        <button data-page="datasets">数据集</button>
+        <button data-page="manual">操作手册</button>
+        <button data-page="compare">新老对比</button>
+        <button data-page="roadmap">规划进度</button>
+        <button data-page="qa">Q&A</button>
+        <button data-page="data">数据口径</button>
+      </nav>
+      <div class="side-note" id="sideSource">
+        <span>当前页面数据来源</span>
+        <b id="sideSourceTitle">总览</b>
+        <div id="sideSourceText">汇总操作手册、运营资料、Teambition 规划任务、新老 BI 对比表和数据集资料。</div>
+      </div>
+    </aside>
+
+    <main>
+      <section class="page active" id="page-overview">
+        <div class="topbar">
+          <div class="title-block">
+            <h2>每刻 BI 2.0 综合价值看板</h2>
+            <p>面向销售、售前、客户成功等外部协同角色，集中表达新 BI 的价值、能力边界、操作路径、常见问题、与老 BI 的差异、后续规划和数据可信口径。</p>
+          </div>
+          <div class="source-pill"><span class="dot"></span> 最近同步：2026-05-28 · Demo</div>
+        </div>
+
+        <div class="grid metrics">
+          <article class="metric">
+            <div class="label">新 BI 能力覆盖</div>
+            <div class="value" id="coverageMetric">--</div>
+            <div class="hint">基于新老 BI 对比表，统计 BI 2.0 已支持能力。</div>
+          </article>
+          <article class="metric">
+            <div class="label">增强/独有能力</div>
+            <div class="value" id="advantageMetric">--</div>
+            <div class="hint">相较 BI 1.0 补齐或明显增强的能力。</div>
+          </article>
+          <article class="metric">
+            <div class="label">规划任务</div>
+            <div class="value">42</div>
+            <div class="hint">Teambition 中执行者为祝欣怡的规划需求。</div>
+          </article>
+          <article class="metric">
+            <div class="label">近期路线图</div>
+            <div class="value">27</div>
+            <div class="hint">2026Q2/Q3 的规划任务，适合对外说明演进方向。</div>
+          </article>
+        </div>
+
+        <div class="grid three">
+          <article class="card">
+            <div class="eyebrow">核心定位</div>
+            <h4>从报表模块升级为数据决策能力层</h4>
+            <p>BI 2.0 不只解决“能不能看报表”，还覆盖数据处理、权限、场景模板、智能问数和后续 AI 洞察。</p>
+            <div class="chips">
+              <span class="chip blue">数据采集</span>
+              <span class="chip green">数据处理</span>
+              <span class="chip amber">可视化分析</span>
+              <span class="chip violet">AI 问数</span>
+            </div>
+          </article>
+          <article class="card">
+            <div class="eyebrow">对外主张</div>
+            <h4>让费控从流程数字化升级为费用经营智能化</h4>
+            <p>面向 CFO、财务、部门负责人、项目经理和审核人，提供经营分析、风险发现、预算控制和决策辅助。</p>
+            <div class="chips">
+              <span class="chip">费用经营</span>
+              <span class="chip">预算执行</span>
+              <span class="chip">异常洞察</span>
+            </div>
+          </article>
+          <article class="card">
+            <div class="eyebrow">近期重点</div>
+            <h4>预设报表体系、实时数据、AI 洞察与权限模型</h4>
+            <p>Teambition 规划中，2026Q2/Q3 集中在实时报表、行业/角色主题、智能问数扩展、AI 洞察和数据权限。</p>
+            <div class="chips">
+              <span class="chip green">2026Q2</span>
+              <span class="chip blue">2026Q3</span>
+              <span class="chip amber">预研中</span>
+            </div>
+          </article>
+        </div>
+
+        <div class="panel">
+          <div class="section-head">
+            <h3>页面导航说明</h3>
+            <span>每个 tab 独立承载完整内容</span>
+          </div>
+          <div class="grid mini-matrix">
+            <div class="info-row"><b>价值地图</b><span>按用户、场景、能力、对外话术拆解“为什么客户需要 BI 2.0”。</span></div>
+            <div class="info-row"><b>功能清单</b><span>根据操作手册整理功能域、核心能力、开通条件、权限和成熟度。</span></div>
+            <div class="info-row"><b>数据集</b><span>按业务域解释 BI 2.0 可用数据资产，以及能支撑哪些报表和客户问题。</span></div>
+            <div class="info-row"><b>操作手册</b><span>把开通、授权、搭建、问数、部署等动作拆成可执行步骤和注意事项。</span></div>
+            <div class="info-row"><b>新老对比</b><span>展示 BI 2.0、BI 1.0、汇联易三方对比，并给出替换判断。</span></div>
+            <div class="info-row"><b>规划进度</b><span>展示 Teambition 规划任务，按季度、定位、状态、功能域筛选。</span></div>
+            <div class="info-row"><b>Q&A</b><span>沉淀销售、售前、CS 可能被客户问到的问题，统一回答口径。</span></div>
+            <div class="info-row"><b>数据口径</b><span>说明看板数据从哪里来、怎么算，以及后续如何持续治理。</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="page-value">
+        <div class="topbar">
+          <div class="title-block">
+            <h2>新 BI 价值地图</h2>
+            <p>用于对外讲清楚 BI 2.0 的业务价值：不是多几张图表，而是帮助企业看清费用现状、管住费用风险、加快经营和审核决策。</p>
+          </div>
+          <div class="source-pill"><span class="dot"></span> 来源：BI 产品价值框架</div>
+        </div>
+
+        <div class="grid three" id="valueCards"></div>
+
+        <div class="grid wide-left">
+          <div class="panel">
+            <div class="section-head">
+              <h3>角色价值拆解</h3>
+              <span>外部沟通可按角色展开</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:16%">角色</th>
+                    <th style="width:24%">核心问题</th>
+                    <th style="width:30%">BI 2.0 价值</th>
+                    <th style="width:30%">代表场景</th>
+                  </tr>
+                </thead>
+                <tbody id="roleValueBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="section-head">
+              <h3>销售话术抓手</h3>
+              <span>适合方案介绍页</span>
+            </div>
+            <div class="info-list">
+              <div class="info-row"><b>面向管理层</b><span>从费用总览、预算执行、风险分布到管理月报，减少手工汇总和经营盲区。</span></div>
+              <div class="info-row"><b>面向财务团队</b><span>用统一数据口径、数据工厂和自定义报表，降低重复取数、清洗和做表成本。</span></div>
+              <div class="info-row"><b>面向业务负责人</b><span>按部门、项目、人员、客户或费用类型下钻，定位花费原因和优化空间。</span></div>
+              <div class="info-row"><b>面向实施与客户成功</b><span>预设场景包和样板间降低交付成本，让客户更快看到价值。</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="page-features">
+        <div class="topbar">
+          <div class="title-block">
+            <h2>新 BI 功能清单</h2>
+            <p>根据操作手册整理为外部可理解的功能清单，覆盖预设报表、自定义报表、数据工厂、权限、智能问数和部署运维。</p>
+          </div>
+          <div class="source-pill"><span class="dot"></span> 来源：操作手册 + 部署开通文档 · <a href="https://maycur.yuque.com/cpdx/sv5ndf/gnsztqx2z1u14c06?singleDoc#" target="_blank" rel="noopener noreferrer">查看线上文档</a></div>
+        </div>
+
+        <div class="grid wide-right">
+          <div class="panel">
+            <div class="section-head">
+              <h3>能力域成熟度</h3>
+              <span>Demo 评估口径</span>
+            </div>
+            <div class="bar-list" id="maturityBars"></div>
+          </div>
+          <div class="panel">
+            <div class="section-head">
+              <h3>功能域概览</h3>
+              <span>按产品能力归类</span>
+            </div>
+            <div class="grid mini-matrix" id="featureMatrix"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="section-head">
+            <h3>功能清单明细</h3>
+            <span>用于外部材料或售前评估</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:14%">功能域</th>
+                  <th style="width:18%">能力</th>
+                  <th style="width:26%">说明</th>
+                  <th style="width:18%">开通/权限</th>
+                  <th style="width:12%">成熟度</th>
+                  <th style="width:12%">外部口径</th>
+                </tr>
+              </thead>
+              <tbody id="featureDetailBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="page-datasets">
+        <div class="topbar">
+          <div class="title-block">
+            <h2>BI 2.0 数据集资产</h2>
+            <p>把操作手册中的数据集整理成业务域视角，帮助外部人员判断客户关心的问题能否通过现有数据资产直接回答。</p>
+          </div>
+          <div class="source-pill"><span class="dot"></span> 来源：数据集操作手册 · <a href="https://maycur.yuque.com/gdghxr/rvaoms/hxq0hz6fvdsq56aa" target="_blank" rel="noopener noreferrer">查看线上文档</a></div>
+        </div>
+
+        <div class="grid metrics">
+          <article class="metric">
+            <div class="label">数据域</div>
+            <div class="value">8</div>
+            <div class="hint">报销、申请、预算、审批、发票、合同、第三方、费用标准。</div>
+          </article>
+          <article class="metric">
+            <div class="label">核心数据集</div>
+            <div class="value">31</div>
+            <div class="hint">覆盖单据、费用、行程、预算、流程、发票、合同等主题。</div>
+          </article>
+          <article class="metric">
+            <div class="label">最适合对外讲解</div>
+            <div class="value">5类</div>
+            <div class="hint">费用、预算、流程、差旅、发票合同等高频经营问题。</div>
+          </article>
+          <article class="metric">
+            <div class="label">使用提醒</div>
+            <div class="value">先选域</div>
+            <div class="hint">先确认客户场景，再选择数据集和报表，不建议从字段开始讲。</div>
+          </article>
+        </div>
+
+        <div class="panel">
+          <div class="section-head">
+            <h3>数据集目录</h3>
+            <span>按业务问题组织</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:13%">数据域</th>
+                  <th style="width:24%">数据集</th>
+                  <th style="width:24%">可回答的问题</th>
+                  <th style="width:22%">典型报表</th>
+                  <th style="width:17%">外部提示</th>
+                </tr>
+              </thead>
+              <tbody id="datasetBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid three">
+          <article class="card">
+            <div class="eyebrow">销售讲法</div>
+            <h4>从客户问题反推数据集</h4>
+            <p>例如客户问“预算为什么超”，优先看预算单元、预算明细、报销费用和申请明细，而不是直接解释字段。</p>
+            <div class="chips"><span class="chip blue">问题驱动</span><span class="chip">少讲字段</span></div>
+          </article>
+          <article class="card">
+            <div class="eyebrow">售前讲法</div>
+            <h4>说明标准能力和二开边界</h4>
+            <p>标准数据集能覆盖通用分析；如果客户需要自定义主数据、跨系统指标或集团口径，需要进入方案评估。</p>
+            <div class="chips"><span class="chip green">标准覆盖</span><span class="chip amber">方案评估</span></div>
+          </article>
+          <article class="card">
+            <div class="eyebrow">CS 讲法</div>
+            <h4>把数据集变成客户运营资产</h4>
+            <p>围绕客户高频复盘主题建立报表清单，持续追踪访问、订阅、导出和业务动作闭环。</p>
+            <div class="chips"><span class="chip violet">运营沉淀</span><span class="chip">续费增购</span></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" id="page-manual">
+        <div class="topbar">
+          <div class="title-block">
+            <h2>操作手册与落地路径</h2>
+            <p>把开通、授权、搭建、问数和部署相关动作转成面向外部协同角色的执行手册，便于判断“该找谁、做什么、有什么风险”。</p>
+          </div>
+          <div class="source-pill"><span class="dot"></span> 来源：开通部署文档 + 智能问数手册 · <a href="https://maycur.yuque.com/mkb/hz1vp5" target="_blank" rel="noopener noreferrer">查看线上文档</a></div>
+        </div>
+
+        <div class="grid wide-right">
+          <div class="panel">
+            <div class="section-head">
+              <h3>推广学习路径</h3>
+              <span>建议按这个顺序讲</span>
+            </div>
+            <div class="timeline">
+              <div class="timeline-item"><b>1. 价值</b><div class="bar"><i style="width:100%;background:var(--blue)"></i></div><b>先讲</b></div>
+              <div class="timeline-item"><b>2. 场景</b><div class="bar"><i style="width:82%;background:var(--green)"></i></div><b>再演</b></div>
+              <div class="timeline-item"><b>3. 权限</b><div class="bar"><i style="width:68%;background:var(--amber)"></i></div><b>确认</b></div>
+              <div class="timeline-item"><b>4. 部署</b><div class="bar"><i style="width:55%;background:var(--red)"></i></div><b>评估</b></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="section-head">
+              <h3>关键操作步骤</h3>
+              <span>可直接用于内部培训</span>
+            </div>
+            <div class="step-list" id="manualSteps"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="section-head">
+            <h3>常见落地风险</h3>
+            <span>对外承诺前先核对</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:18%">风险点</th>
+                  <th style="width:30%">表现</th>
+                  <th style="width:28%">排查方式</th>
+                  <th style="width:24%">建议口径</th>
+                </tr>
+              </thead>
+              <tbody id="manualRiskBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="page-compare">
+        <div class="topbar">
+          <div class="title-block">
+            <h2>新老 BI 与竞品功能对比</h2>
+            <p>基于运营资料中的结构化对比表，帮助判断 BI 2.0 相比 BI 1.0 的替换准备度，以及相比汇联易的能力优势。</p>
+          </div>
+          <div class="source-pill"><span class="dot"></span> 来源：新老 BI 及竞品功能对比 · <a href="https://maycur.yuque.com/cpdx/rgu4yz/bvylp4bhgs9r7it3" target="_blank" rel="noopener noreferrer">查看线上文档</a></div>
+        </div>
+
+        <div class="grid metrics">
+          <article class="metric">
+            <div class="label">对比功能项</div>
+            <div class="value">36</div>
+            <div class="hint">图表、计算、数据处理、权限、AI 等能力。</div>
+          </article>
+          <article class="metric">
+            <div class="label">BI 2.0 已支持</div>
+            <div class="value">36</div>
+            <div class="hint">当前对比表中 BI 2.0 均为支持或增强。</div>
+          </article>
+          <article class="metric">
+            <div class="label">相对 BI 1.0 增强</div>
+            <div class="value" id="compareAdvantageMetric">--</div>
+            <div class="hint">BI 1.0 不支持或 BI 2.0 明显增强。</div>
+          </article>
+          <article class="metric">
+            <div class="label">AI 独有能力</div>
+            <div class="value">1</div>
+            <div class="hint">AI 问数当前为 BI 2.0 差异化能力。</div>
+          </article>
+        </div>
+
+        <div class="panel">
+          <div class="section-head">
+            <h3>对比矩阵</h3>
+            <span>可按差异筛选</span>
+          </div>
+          <div class="toolbar" id="compareFilters">
+            <button class="active" data-filter="all">全部</button>
+            <button data-filter="better">新 BI 增强</button>
+            <button data-filter="same">两代均支持</button>
+            <button data-filter="gap">老 BI 未覆盖</button>
+            <button data-filter="ai">AI/智能化</button>
+          </div>
+          <div class="table-wrap" style="margin-top:12px">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:14%">功能</th>
+                  <th style="width:27%">BI 2.0</th>
+                  <th style="width:24%">BI 1.0</th>
+                  <th style="width:22%">汇联易</th>
+                  <th style="width:13%">判断</th>
+                </tr>
+              </thead>
+              <tbody id="compareBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="page-roadmap">
+        <div class="topbar">
+          <div class="title-block">
+            <h2>规划任务进度</h2>
+            <p>来自 Teambition 项目「费控产品规划及预研」，筛选执行者为祝欣怡的需求。当前 Demo 将任务按季度、状态、定位和功能域归类。</p>
+          </div>
+          <div class="source-pill"><span class="dot"></span> projectId：66a6feb1973359774517c703</div>
+        </div>
+
+        <div class="grid metrics">
+          <article class="metric">
+            <div class="label">任务总量</div>
+            <div class="value">42</div>
+            <div class="hint">执行者为祝欣怡的规划任务。</div>
+          </article>
+          <article class="metric">
+            <div class="label">已完成</div>
+            <div class="value">3</div>
+            <div class="hint">包含 BI2.0 自定义报表/ETL、ChatBI 集成等。</div>
+          </article>
+          <article class="metric">
+            <div class="label">Q2 任务</div>
+            <div class="value">10</div>
+            <div class="hint">实时报表、海外报表、差旅偏移量等。</div>
+          </article>
+          <article class="metric">
+            <div class="label">Q3 任务</div>
+            <div class="value">17</div>
+            <div class="hint">预设报表体系、AI 洞察、权限、集团报表等。</div>
+          </article>
+        </div>
+
+        <div class="grid wide-right">
+          <div class="panel">
+            <div class="section-head">
+              <h3>季度分布</h3>
+              <span>按预计上线时间</span>
+            </div>
+            <div class="timeline" id="quarterBars"></div>
+          </div>
+          <div class="panel">
+            <div class="section-head">
+              <h3>任务清单</h3>
+              <span>按标题自动归类功能域</span>
+            </div>
+            <div class="toolbar" id="taskFilters" style="margin-bottom:12px">
+              <button class="active" data-filter="all">全部</button>
+              <button data-filter="预设报表">预设报表</button>
+              <button data-filter="智能问数">智能问数</button>
+              <button data-filter="AI">AI</button>
+              <button data-filter="实时">实时</button>
+              <button data-filter="数据权限">权限</button>
+            </div>
+            <div class="task-list" id="taskList"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="section-head">
+            <h3>规划主题解读</h3>
+            <span>适合路线图汇报</span>
+          </div>
+          <div class="grid three">
+            <div class="info-row"><b>Q2：补齐可卖能力</b><span>集中在实时报表、海外费用、差旅偏移量、行程日历和自动化填写率，偏向“能讲清价值并形成样板”。</span></div>
+            <div class="info-row"><b>Q3：扩展差异化能力</b><span>集中在高级预设报表、集团报表、智能问数对接自定义报表、AI 洞察和角色权限。</span></div>
+            <div class="info-row"><b>长期：数据经营闭环</b><span>从报表查看继续走向风险控制、异常预警、运营矩阵、行业/角色包和数据字典智能化。</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="page-qa">
+        <div class="topbar">
+          <div class="title-block">
+            <h2>BI 2.0 常见问题 Q&A</h2>
+            <p>沉淀客户和外部协同角色最常问的问题，统一回答边界，避免在售前、销售、CS 之间出现不同口径。</p>
+          </div>
+          <div class="source-pill"><span class="dot"></span> 来源：BI2.0 Q&A + 部署开通资料 · <a href="https://maycur.yuque.com/cpdx/rgu4yz/nvu6maon4f0a9yxv" target="_blank" rel="noopener noreferrer">查看线上文档</a></div>
+        </div>
+
+        <div class="grid three">
+          <article class="card">
+            <div class="eyebrow">回答原则</div>
+            <h4>先肯定价值，再说明边界</h4>
+            <p>对客户不要只说“不支持”，应先讲已覆盖的标准场景，再把部署、版本、AI、自定义能力边界说明清楚。</p>
+            <div class="chips"><span class="chip blue">价值优先</span><span class="chip amber">边界清晰</span></div>
+          </article>
+          <article class="card">
+            <div class="eyebrow">高风险问题</div>
+            <h4>试用、私有化、AI、迁移需谨慎</h4>
+            <p>这些问题容易影响交付和承诺，建议统一按 Q&A 口径回复，并在复杂客户场景下拉产研评估。</p>
+            <div class="chips"><span class="chip red">需评估</span><span class="chip">避免过度承诺</span></div>
+          </article>
+          <article class="card">
+            <div class="eyebrow">学习方式</div>
+            <h4>按客户问题分类查找</h4>
+            <p>遇到客户追问时，先判断属于价值、版本、部署、权限、AI、迁移还是数据集问题，再定位答案。</p>
+            <div class="chips"><span class="chip green">分类检索</span><span class="chip violet">统一话术</span></div>
+          </article>
+        </div>
+
+        <div class="panel">
+          <div class="section-head">
+            <h3>问题清单</h3>
+            <span>销售、售前、CS 共用口径</span>
+          </div>
+          <div class="qa-list" id="qaList"></div>
+        </div>
+      </section>
+
+      <section class="page" id="page-data">
+        <div class="topbar">
+          <div class="title-block">
+            <h2>数据口径与治理建议</h2>
+            <p>用于说明看板数据从哪里来、怎么算、哪些字段仍需要补齐，避免外部看板变成静态展示页。</p>
+          </div>
+          <div class="source-pill"><span class="dot"></span> 数据层设计建议</div>
+        </div>
+
+        <div class="grid two">
+          <div class="panel">
+            <div class="section-head">
+              <h3>当前数据来源</h3>
+              <span>Demo 已接入/整理</span>
+            </div>
+            <div class="info-list">
+              <div class="info-row"><b>操作手册</b><span>预设报表、数据工厂 ETL、智能问数、部署与开通相关文档。</span></div>
+              <div class="info-row"><b>运营资料</b><span>BI 2.0 培训、新老 BI 及竞品功能对比、Q&A、智能问数手册。</span></div>
+              <div class="info-row"><b>Teambition</b><span>项目「费控产品规划及预研」，执行者祝欣怡，读取任务标题、状态、预计上线时间、定位、方案确定性、预估人天。</span></div>
+              <div class="info-row"><b>数据集文档</b><span>作为后续数据资产和预设报表的数据支撑材料，目前未直接转成看板指标。</span></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="section-head">
+              <h3>看板核心指标口径</h3>
+              <span>可产品化沉淀</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>指标</th>
+                    <th>计算口径</th>
+                    <th>用途</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>能力覆盖率</td><td>BI 2.0 已支持能力 / 对比表功能总数</td><td>判断能力完整度</td></tr>
+                  <tr><td>增强能力数</td><td>BI 1.0 不支持或 BI 2.0 明显增强的能力数</td><td>支撑替换和销售话术</td></tr>
+                  <tr><td>规划任务数</td><td>Teambition 中执行者为祝欣怡的任务数</td><td>追踪后续演进</td></tr>
+                  <tr><td>近期路线图</td><td>预计上线时间为 2026Q2 或 2026Q3 的任务数</td><td>对外说明短中期计划</td></tr>
+                  <tr><td>成熟度评分</td><td>基于上线状态、开通条件、权限复杂度、售卖可用性人工评估</td><td>评估外部可用程度</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="section-head">
+            <h3>下一步字段治理</h3>
+            <span>让 Demo 变成可持续看板</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:18%">数据域</th>
+                  <th style="width:28%">当前状态</th>
+                  <th style="width:28%">建议补充字段</th>
+                  <th style="width:26%">补齐后的价值</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>功能清单</td>
+                  <td>从操作手册人工整理，已能覆盖主要能力域。</td>
+                  <td>功能域、功能名称、上线状态、支持版本、成熟度、负责人、外部口径。</td>
+                  <td>可以持续维护，不依赖每次人工重新整理。</td>
+                </tr>
+                <tr>
+                  <td>新老对比</td>
+                  <td>已有结构化 Excel，适合直接作为数据源。</td>
+                  <td>老 BI 使用频率、客户迁移风险、是否影响售卖、是否影响交付。</td>
+                  <td>从“能力差异”升级到“替换准备度”。</td>
+                </tr>
+                <tr>
+                  <td>Teambition 规划</td>
+                  <td>已有预计上线时间、定位、方案确定性、预估人天。</td>
+                  <td>BI 功能域、是否对外展示、关联能力项、路线图主题、风险等级。</td>
+                  <td>规划任务能自动挂到功能清单和价值地图下。</td>
+                </tr>
+                <tr>
+                  <td>价值证明</td>
+                  <td>已有价值框架，但缺客户实际数据。</td>
+                  <td>客户使用量、报表访问频次、启用客户数、续费/增购影响、典型客户案例。</td>
+                  <td>从产品讲解升级为真实商业价值证明。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="foot">Demo 说明：当前版本仍是静态 HTML。下一版可将功能台账、对比表和 Teambition 任务同步为 JSON，再由页面直接渲染。</div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const compareRows = [
+      ["图表类型", "支持60+种报表类型", "支持30+种报表类型", "支持，仅11种图表"],
+      ["基础计算", "求和、最大值/最小值、平均值、计数、去重计数", "求和、最大值/最小值、平均值", "不支持"],
+      ["高级计算", "一键同环比/百分比/重复率/排名/累计/表计算", "累计/百分比/同环比", "不支持"],
+      ["图表下钻", "支持", "支持", "不支持"],
+      ["图表联动", "支持", "支持", "不支持"],
+      ["图表跳转", "支持", "不支持", "不支持"],
+      ["图表锚点", "支持", "不支持", "不支持"],
+      ["预警中心", "支持", "不支持", "不支持"],
+      ["数据过滤、排序", "支持", "支持", "不支持"],
+      ["图表复制", "支持", "支持", "不支持"],
+      ["样式自定义", "支持", "支持", "不支持"],
+      ["杜邦分析图", "支持", "不支持", "不支持"],
+      ["中国式报表", "支持", "不支持", "不支持"],
+      ["自定义地图", "支持", "不支持", "不支持"],
+      ["演示幻灯片", "支持", "不支持", "不支持"],
+      ["保存筛选视图", "支持", "不支持", "不支持"],
+      ["报表导出", "支持 excel、word、pdf 和图片", "仅支持 excel、图片", "仅支持 excel"],
+      ["订阅报表、卡片", "支持", "支持", "不支持"],
+      ["计算列", "支持", "不支持", "不支持"],
+      ["合并列", "支持", "支持", "不支持"],
+      ["新增列", "支持", "支持", "不支持"],
+      ["聚合", "支持", "支持", "不支持"],
+      ["过滤", "支持", "支持", "不支持"],
+      ["行转列", "支持", "不支持", "不支持"],
+      ["筛选数据行", "支持", "支持", "不支持"],
+      ["去重", "支持", "支持", "不支持"],
+      ["值/Null值替换", "支持", "不支持", "不支持"],
+      ["行拼接", "支持", "不支持", "不支持"],
+      ["关联数据", "支持", "支持", "支持"],
+      ["SQL输入", "支持", "不支持", "不支持"],
+      ["行列权限管理", "数据权限覆盖全面，支持行权限、列权限、敏感字段", "支持", "支持"],
+      ["数据集权限", "支持", "支持", "不支持"],
+      ["报表权限", "支持", "支持", "仅支持固定几种"],
+      ["分享权限", "支持", "支持", "不支持"],
+      ["导出权限", "支持", "支持", "不支持"],
+      ["AI问数", "支持", "不支持", "不支持"]
+    ];
+
+    const valueCards = [
+      {
+        title: "看得清：费用经营透明化",
+        desc: "帮助企业知道费用发生了什么、花在哪里、由谁负责、趋势是否正常。",
+        points: ["费用经营驾驶舱", "公司费用总览", "项目费用看板", "预算执行看板", "明细穿透到单据"]
+      },
+      {
+        title: "管得住：费用风险可控化",
+        desc: "把预算、规则、异常、审核、月结串起来，让费用风险可发现、可拦截、可复盘。",
+        points: ["预算超支预警", "异常费用洞察", "审核决策卡片", "规则模拟器", "月结风险清单"]
+      },
+      {
+        title: "决策快：数据能力场景化",
+        desc: "减少分析成本，让数据直接进入审批、预算、规则、月报和经营复盘现场。",
+        points: ["AI 问数", "自动报告", "嵌入式 BI", "定时推送", "销售演示看板"]
+      }
+    ];
+
+    const roleValues = [
+      ["老板 / CEO", "公司费用是否健康，趋势是否异常", "一屏看费用规模、结构、趋势、预算消耗和风险分布", "费用经营驾驶舱、管理层月报"],
+      ["CFO / 财务负责人", "预算是否可控，哪里存在风险", "按组织、项目、费用类型下钻，形成预算和风控闭环", "预算执行、异常费用、月结检查"],
+      ["财务 / 财务 BP", "怎么快速定位问题并输出分析", "减少手工 Excel 和重复取数，支持自定义报表与 ETL", "部门费用、项目费用、流程效率"],
+      ["部门负责人", "本部门花了多少钱，是否超预算", "按部门视角查看费用、预算、人员排行和异常对象", "部门费用看板、预算预警"],
+      ["项目经理", "项目成本是否失控，钱花在哪些环节", "把项目费用、预算、成员费用和明细穿透串起来", "项目费用看板、项目预算复盘"],
+      ["审核人", "这张单该不该批，驳回依据是什么", "在审批动作中看到历史报销、同类均值、预算状态和风险提示", "审核决策卡片、驳回依据推荐"],
+      ["销售 / CS / 实施", "如何证明客户价值并推动续费增购", "用样板间、客户成功价值报告和预设模板降低讲解与交付成本", "销售演示、客户成功看板"]
+    ];
+
+    const featureDomains = [
+      { name: "预设报表", maturity: 82, color: "var(--blue)", desc: "面向标准场景即开即用，支持新版预设报表入口、角色授权、主管部门及下级部门默认数据权限。", tags: ["已上线", "公有云", "只读"] },
+      { name: "自定义报表", maturity: 78, color: "var(--green)", desc: "支持 60+ 图表、拖拽搭建、图表下钻联动、跳转、锚点、导出、订阅和样式自定义。", tags: ["可售卖", "旗舰版", "移动端"] },
+      { name: "数据工厂 ETL", maturity: 74, color: "var(--cyan)", desc: "零代码数据准备能力，覆盖输入/输出数据集、列编辑、数据编辑、数据集组合、高级计算、调度更新。", tags: ["核心能力", "零代码", "调度"] },
+      { name: "权限与安全", maturity: 70, color: "var(--amber)", desc: "覆盖资源权限、行权限、列权限、敏感字段、账户同步、用户属性和角色授权。", tags: ["关键依赖", "行列权限"] },
+      { name: "智能问数", maturity: 62, color: "var(--violet)", desc: "基于自然语言完成问数、SQL 生成与修复、图表生成、洞察分析和知识整合。", tags: ["已上线", "需调优", "SaaS"] },
+      { name: "部署与运维", maturity: 66, color: "var(--red)", desc: "支持 SaaS、专属云、混合云、本地化部署，涉及 License、资源导入、账号同步和数据更新配置。", tags: ["交付依赖", "私有云"] }
+    ];
+
+    const featureDetails = [
+      ["预设报表", "新版预设报表入口", "在报表入口查看新版预设报表，支持新老报表切换；仅开通新版时可直接进入。", "BOSS 开关；角色与权限配置查看预设报表", "高", "适合标准客户快速启用"],
+      ["预设报表", "默认数据权限", "默认可见主管部门及下级部门数据，若无数据需确认组织架构中是否为部门主管。", "部门主管数据权限", "中", "适合管理层和部门负责人"],
+      ["自定义报表", "图表与仪表盘", "支持 60+ 报表类型、图表下钻、联动、跳转、锚点、复制和样式自定义。", "BI 2.0 自定义报表权限", "高", "适合复杂分析和可视化展示"],
+      ["自定义报表", "导出与订阅", "支持 Excel、Word、PDF、图片导出，支持订阅报表和卡片。", "导出权限、报表权限", "高", "适合管理月报和定期经营复盘"],
+      ["数据工厂 ETL", "拖拽式 ETL 画布", "通过输入数据集、输出数据集和操作节点构建数据处理工作流。", "报表管理员（新）可编辑", "中", "适合轻量数仓和数据准备"],
+      ["数据工厂 ETL", "数据处理算子", "支持选择列、添加计算列、合并列、分组聚合、行转列、列转行、筛选、去重、值替换、关联数据、SQL 输入。", "数据集和 ETL 权限", "高", "适合业务人员低门槛处理数据"],
+      ["数据工厂 ETL", "调度与更新", "支持定时更新、数据集更新后触发、任务优先级、超时设置。", "更新设置、调度状态", "中", "适合保持分析数据及时性"],
+      ["权限与安全", "资源权限", "配置用户可见和可使用哪些数据集、仪表盘、报表。", "资源授权", "高", "保障不同角色访问边界"],
+      ["权限与安全", "数据权限", "支持行权限、列权限、敏感字段，按用户属性控制数据范围。", "用户属性、权限规则", "中", "适合集团和多组织客户"],
+      ["智能问数", "自然语言问数", "通过每小刻入口，用自然语言进行即时问数并返回图表。", "BOSS 开启智能问数；角色授权", "中", "适合降低业务人员分析门槛"],
+      ["智能问数", "洞察分析", "问数后可做归因分析，生成报告并支持导出下载。", "需配置业务主题和模型调优", "中", "适合从数据查询走向分析建议"],
+      ["部署运维", "公有云/私有云/混合云", "不同部署模式在资源、更新、ChatBI、预设报表范围上存在差异。", "License、资源配置、部署申请", "中", "售前需明确客户部署要求"]
+    ];
+
+    const datasetCatalog = [
+      ["报销单", "报销单数据集、报销费用数据集、含分摊的报销单、含行程的差旅报销单、含费用的行程报销单、含收款信息的报销单、费用含核销的数据集、借款单、还款单、核销借款、私车公用", "企业费用花在哪里、谁报销、费用类型结构、差旅费用和实际收付款情况。", "费用经营驾驶舱、部门费用看板、差旅费用分析、员工费用排行。", "最适合作为 BI 价值演示入口，客户容易理解。"],
+      ["申请单", "申请单数据集、含申请明细的申请单、含分摊明细的申请单、包含行程的差旅申请单", "费用发生前的申请规模、申请与报销差异、行程计划和预算占用。", "申请执行分析、差旅计划分析、申请转报销漏斗。", "适合讲事前控制和申请到报销闭环。"],
+      ["预算", "预算单元数据集、预算单元数据集（层级）、预算明细数据集、预算明细数据集（层级）、预算编制金额调整", "预算在哪里被消耗、哪些部门或项目接近超支、预算调整是否频繁。", "预算执行看板、预算超支预警、预算调整追踪。", "适合 CFO、财务 BP、部门负责人场景。"],
+      ["审批与流程", "流程任务数据集、流程周期数据集、审批理由数据集", "单据卡在哪里、审批周期多久、驳回原因和流程效率如何。", "流程效率分析、审批瓶颈分析、驳回原因分析。", "适合讲降本增效和流程体验优化。"],
+      ["发票", "发票数据集、发票明细数据集", "发票金额、税额、明细、验真验重和票据使用情况。", "发票合规分析、税务分析、票据明细台账。", "适合合规、税务和财务共享客户。"],
+      ["合同与凭证", "合同数据集、含付款计划的合同、凭证数据集", "合同付款计划、实际付款、凭证生成和财务入账情况。", "合同付款看板、凭证生成分析、付款计划追踪。", "适合合同付款、项目成本和财务入账场景。"],
+      ["第三方差旅", "机票费用、火车费用、酒店费用、生态详情（包含申请单行程信息）", "差旅供应商费用、酒店机票火车结构、预订和报销的一致性。", "差旅供应商分析、差旅费用结构、行程合规分析。", "适合差旅客户和高频出行客户。"],
+      ["费用标准", "费用标准数据集", "费用标准如何配置、哪些费用接近或超过标准、标准执行效果。", "标准执行分析、超标费用分析、政策优化看板。", "适合讲规则治理和费用管控。"]
+    ];
+
+    const manualGuides = [
+      ["预设报表开通", "确认客户为公有云场景后，通过 BOSS 开启新版预设报表，再在角色与权限中配置查看预设报表权限。", ["公有云优先", "新版报表只读", "主管部门默认权限"]],
+      ["自定义报表开通", "确认客户版本、License 和数据量；公有云需提供 entcode/license，私有云按交付资源配置。", ["旗舰版", "管理员编辑", "大数据量需评估"]],
+      ["数据工厂 ETL 使用", "从输入数据集开始，通过选择列、计算列、聚合、行转列、关联数据、SQL 输入等节点完成数据准备。", ["零代码处理", "调度更新", "输出数据集"]],
+      ["智能问数使用", "开启智能问数增值服务和角色权限后，通过每刻智能助手进行问数分析和洞察分析。", ["预设场景", "效果需调优", "自定义场景需评估"]],
+      ["权限配置", "先配置资源权限，再结合用户属性配置行权限、列权限和敏感字段，保证不同角色看到对应数据。", ["资源权限", "数据权限", "敏感字段"]],
+      ["部署与资源评估", "根据 SaaS、专属云、混合云、本地化部署差异，确认资源、更新、ChatBI、预设报表和运维责任。", ["售前必查", "能力有差异", "避免过度承诺"]]
+    ];
+
+    const manualRisks = [
+      ["预设报表不可用", "客户开启后仍看不到新版预设报表或看不到数据。", "检查是否为公有云、BOSS 开关、角色权限、部门主管配置和主管部门范围。", "先排查开关与权限，若组织权限不完整需由实施补齐。"],
+      ["客户要求试用环境", "客户希望拿测试环境或完整试用账号自行验证。", "确认是否可申请官方演示试用账号。", "BI 2.0 暂不提供测试环境，可申请官方演示试用账号。"],
+      ["自定义报表数据量过大", "单据总量超过 100 万或年均超过 50 万，报表性能和算力存在风险。", "售前评估单据量、更新频率、复杂计算和并发访问。", "需要额外计算资源评估后再承诺交付。"],
+      ["私有化能力差异", "客户选择专属云、混合云或 OP 后，部分能力与 SaaS 不一致。", "确认部署形态、湖仓能力、预设报表、ChatBI、更新方式和运维责任。", "不同部署模式能力边界不同，需按部署方案确认。"],
+      ["智能问数效果不稳定", "自然语言问题无法准确生成答案，或客户希望接入自定义场景。", "检查业务主题、数据权限、知识配置和是否属于预设场景。", "已上线能力以预设场景为主，自定义场景需产研评估。"]
+    ];
+
+    const qaItems = [
+      ["价值定位", "每刻 BI 和其他通用 BI 的区别是什么？", "每刻 BI 面向财务和费控场景，内置报销、预算、流程、差旅、发票等业务数据和场景模板，客户不需要从空白 BI 工具开始建模。"],
+      ["试用", "能否提供测试环境或试用账号？", "BI 2.0 暂无法提供客户自建测试环境，可申请官方演示试用账号，用于销售、售前和客户学习演示。"],
+      ["产品集成", "是否能和每刻其他产品集成？", "BI 2.0 已与每刻报销产品化集成；每刻云票等场景需以当前产品支持范围为准，不建议直接承诺全部打通。"],
+      ["数据中台", "BI 2.0 能否作为客户的数据中台？", "可以做轻量数据处理和分析准备，但不等同于企业级数据治理中台。涉及复杂治理、跨系统主数据、统一指标体系时需要单独方案评估。"],
+      ["移动端", "是否支持移动端查看？", "支持移动端查看和使用部分报表能力，复杂搭建、数据工厂等管理动作仍建议在 PC 端完成。"],
+      ["智能问数", "智能问数是否已经可用？", "已上线，但效果依赖业务主题、数据模型和调优。客户正式购买或复杂场景落地前，需要结合具体场景做评估。"],
+      ["版本支持", "哪些版本可以使用 BI 2.0？", "当前重点支持每刻报销旗舰版；国际版、钉版、民生等版本能力需要按规划和交付节奏确认。"],
+      ["新老迁移", "老 BI 升级到新 BI，数据和报表怎么迁移？", "业务单据数据无需迁移；客户自定义搭建的数据集、报表和系统集成需要评估后重建或迁移。"],
+      ["部署", "是否支持本地化部署？", "支持多种部署形态，但专属云、混合云、OP 与 SaaS 能力存在差异，尤其是湖仓、预设报表、ChatBI、更新和运维责任。"],
+      ["专属云", "专属云客户有什么限制？", "可能缺少湖仓一体能力，部分预设报表缺失，ChatBI 智能问数购买和使用也可能受限，需要按项目确认。"],
+      ["混合云", "混合云客户有什么限制？", "客户需要承担硬件和运维，更新通常按季度推进，技术支持效率和跨地区访问体验可能受影响，ChatBI 可能需要另行立项。"],
+      ["OP", "OP 客户有什么限制？", "通常不提供标准持续更新，客户承担更多运维责任，也可能无法使用每刻 App 和标准 ChatBI 能力。"],
+      ["预设报表", "私有云客户能否使用预设报表？", "操作资料中明确预设报表主要支持公有云，私有云客户不要默认开启，需按交付方案确认。"],
+      ["权限", "客户看不到数据时应该先查什么？", "先查是否开启对应能力、角色是否有报表权限、用户是否有部门主管或用户属性、行列权限和数据授权是否完整。"],
+      ["对外承诺", "客户提出未覆盖能力时怎么回复？", "先判断是否属于标准能力、规划能力还是定制需求。标准能力给出操作路径，规划能力说明路线图，定制需求进入需求评估。"]
+    ];
+
+    const roadmapTasks = [
+      ["PP-372", "【报表】每刻BI2.0，支持自定义报表、智能ETL", "已完成", "2026Q1", "进攻亮点", "自定义报表", 1, 12],
+      ["PP-391", "chatBI集成到AI助手、确认chatBI业务主题", "已完成", "2026Q1", "进攻亮点", "智能问数", 0, null],
+      ["PP-53", "【报表2.0】海外报表，国家、目的地、活跃员工数等", "预研完成待开发", "2026Q2", "进攻亮点", "预设报表", 5, 2],
+      ["PP-478", "【实时报表】陆续上架对实时性要求比较高的实时预设报表", "开发中", "2026Q2", "产品闭环问题", "实时", 4, 20],
+      ["PP-504", "【报表2.0】差旅偏移量，差旅报销金额与标准的差旅标准便宜多少", "预研完成待开发", "2026Q2", "市场拓客", "预设报表", 4, 5],
+      ["PP-505", "【预设报表2.0】行程日历报表", "开发中", "2026Q2", "运营追踪", "预设报表", 4, 6],
+      ["PP-506", "【预设报表2.0】费用和报销自动化填写率统计", "开发中", "2026Q2", "进攻亮点", "预设报表", 3, 2],
+      ["PP-165", "P0 高级预设报表：按场景、行业、角色组织 Demo 体系", "未开始", "2026Q3", "竞争防御/市场拓客", "预设报表", 3, null],
+      ["PP-371", "P1 围绕项目主数据的项目报表、台账呈现", "Pending", "2026Q3", "进攻亮点", "预设报表", 3, null],
+      ["PP-556", "P1【预设报表2.0】省钱报表", "开发中", "2026Q3", "进攻亮点", "预设报表", 2, null],
+      ["PP-568", "集团报表：跨租户的数据聚合", "未开始", "2026Q3", "进攻亮点", "预设报表", null, null],
+      ["PP-636", "P1【智能问数】对接自定义报表", "未开始", "2026Q2/Q3", "进攻亮点/竞争防御", "智能问数", 5, null],
+      ["PP-646", "P2【AI】使用 AI 赋能数据字典，用于创建自定义报表", "未开始", "2026Q3", "产品闭环问题", "AI", null, null],
+      ["PP-671", "P0【AI+智能溯源】报告 AI 智能分析", "未开始", "2026Q3", "进攻亮点", "AI", null, null],
+      ["PP-672", "P0【AI智能溯源】支持 AI 解析事由字段并带入筛选", "未开始", "2026Q3", "进攻亮点", "AI", null, null],
+      ["PP-694", "P2【数据权限】新增角色，应用于 CFO、财务、项目、集团、部门视角报表", "未开始", "2026Q3", "产品闭环问题", "数据权限", null, null],
+      ["PP-702", "【AI】AI 洞察报表", "Pending", "未填写", "未填写", "AI", null, null],
+      ["PP-741", "【AI洞察预警通知】仪表盘数据异常时自动发送邮件至负责人", "Pending", "2026Q3", "未填写", "AI", null, null],
+      ["PP-742", "【费用风险控制台】管控所有触发规则校验的数据", "Pending", "2026Q3", "进攻亮点", "预设报表", null, null],
+      ["PP-744", "每刻六大场景运营管理矩阵", "Pending", "2026Q3", "未填写", "运营追踪", null, null],
+      ["PP-745", "【实时报表】支持预算和流程", "Pending", "2026Q3", "未填写", "实时", null, null]
+    ];
+
+    const quarterStats = [
+      ["2026Q1", 2, 2],
+      ["2026Q2", 10, 0],
+      ["2026Q3", 17, 0],
+      ["未填写", 9, 1]
+    ];
+
+    const pageSources = {
+      overview: {
+        title: "总览",
+        text: "汇总操作手册、运营资料、Teambition 规划任务、新老 BI 对比表和数据集资料。"
+      },
+      value: {
+        title: "价值地图",
+        text: "来源：每刻费控 BI 产品价值框架、BI 2.0 培训材料和面向销售/售前/CS 的价值表达整理。"
+      },
+      features: {
+        title: "功能清单",
+        text: "来源：BI 2.0 功能清单语雀文档、操作手册、部署开通文档和智能问数相关说明。"
+      },
+      datasets: {
+        title: "数据集",
+        text: "来源：数据集操作手册语雀文档，按报销、申请、预算、流程、发票、合同、第三方差旅和费用标准整理。"
+      },
+      manual: {
+        title: "操作手册",
+        text: "来源：操作手册语雀空间、BI 2.0 部署和功能开通资料、预设报表/自定义报表/智能问数使用说明。"
+      },
+      compare: {
+        title: "新老对比",
+        text: "来源：新老 BI 及竞品功能对比语雀文档，覆盖 BI 2.0、BI 1.0、汇联易的功能差异。"
+      },
+      roadmap: {
+        title: "规划进度",
+        text: "来源：Teambition 项目「费控产品规划及预研」，筛选执行者为祝欣怡的 BI 相关规划需求。"
+      },
+      qa: {
+        title: "Q&A",
+        text: "来源：BI 2.0 Q&A 语雀文档、部署开通资料和智能问数/预设报表常见问题整理。"
+      },
+      data: {
+        title: "数据口径",
+        text: "来源：本看板数据治理设计，汇总各页面口径、字段治理建议和后续产品化维护方案。"
+      }
+    };
+
+    function classify(row) {
+      const [name, bi2, bi1] = row;
+      if (name.includes("AI")) return ["AI 独有", "better", "ai"];
+      if (bi1.includes("不支持")) return ["新 BI 增强", "better", "gap"];
+      if (bi2.length > bi1.length + 8) return ["新 BI 增强", "better", "better"];
+      return ["两代均支持", "same", "same"];
+    }
+
+    function renderValue() {
+      document.getElementById("valueCards").innerHTML = valueCards.map((item, index) => `
+        <article class="card">
+          <div class="eyebrow">${["价值主张一", "价值主张二", "价值主张三"][index]}</div>
+          <h4>${item.title}</h4>
+          <p>${item.desc}</p>
+          <div class="chips">${item.points.map(p => `<span class="chip ${index === 0 ? "blue" : index === 1 ? "green" : "amber"}">${p}</span>`).join("")}</div>
+        </article>
+      `).join("");
+
+      document.getElementById("roleValueBody").innerHTML = roleValues.map(row => `
+        <tr>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>
+      `).join("");
+    }
+
+    function renderFeatures() {
+      document.getElementById("featureMatrix").innerHTML = featureDomains.map(domain => `
+        <article class="card">
+          <h4>${domain.name}</h4>
+          <p>${domain.desc}</p>
+          <div class="chips">${domain.tags.map(t => `<span class="chip">${t}</span>`).join("")}</div>
+        </article>
+      `).join("");
+
+      document.getElementById("maturityBars").innerHTML = featureDomains.map(domain => `
+        <div class="bar-row">
+          <span>${domain.name}</span>
+          <div class="bar"><i style="width:${domain.maturity}%;background:${domain.color}"></i></div>
+          <b>${domain.maturity}</b>
+        </div>
+      `).join("");
+
+      document.getElementById("featureDetailBody").innerHTML = featureDetails.map(row => `
+        <tr>
+          <td><b>${row[0]}</b></td>
+          <td>${row[1]}</td>
+          <td>${row[2]}</td>
+          <td>${row[3]}</td>
+          <td><span class="status ${row[4] === "高" ? "ok" : "plan"}">${row[4]}</span></td>
+          <td>${row[5]}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderDatasets() {
+      document.getElementById("datasetBody").innerHTML = datasetCatalog.map(row => `
+        <tr>
+          <td><b>${row[0]}</b></td>
+          <td>${row[1]}</td>
+          <td>${row[2]}</td>
+          <td>${row[3]}</td>
+          <td>${row[4]}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderManual() {
+      document.getElementById("manualSteps").innerHTML = manualGuides.map(item => `
+        <article class="step-item">
+          <h4>${item[0]}</h4>
+          <p>${item[1]}</p>
+          <div class="chips">${item[2].map(tag => `<span class="chip">${tag}</span>`).join("")}</div>
+        </article>
+      `).join("");
+
+      document.getElementById("manualRiskBody").innerHTML = manualRisks.map(row => `
+        <tr>
+          <td><b>${row[0]}</b></td>
+          <td>${row[1]}</td>
+          <td>${row[2]}</td>
+          <td>${row[3]}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderQA() {
+      document.getElementById("qaList").innerHTML = qaItems.map((item, index) => `
+        <article class="qa-item">
+          <div class="chips"><span class="chip blue">${item[0]}</span><span class="chip">Q${index + 1}</span></div>
+          <h4>${item[1]}</h4>
+          <p>${item[2]}</p>
+        </article>
+      `).join("");
+    }
+
+    function renderCompare(filter = "all") {
+      const rows = compareRows
+        .map(row => ({ row, cls: classify(row) }))
+        .filter(item => filter === "all" || item.cls[2] === filter || item.cls[1] === filter);
+
+      document.getElementById("compareBody").innerHTML = rows.map(item => {
+        const [name, bi2, bi1, hly] = item.row;
+        return `
+          <tr>
+            <td><b>${name}</b></td>
+            <td>${bi2}</td>
+            <td>${bi1}</td>
+            <td>${hly}</td>
+            <td><span class="status ${item.cls[1]}">${item.cls[0]}</span></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderRoadmap(filter = "all") {
+      const rows = roadmapTasks.filter(task => filter === "all" || task[5].includes(filter) || task[1].includes(filter));
+      document.getElementById("taskList").innerHTML = rows.map(task => {
+        const [id, title, status, quarter, position, domain, certainty, effort] = task;
+        const statusCls = status.includes("完成") ? "ok" : status.includes("开发") ? "better" : status.includes("待") ? "plan" : "same";
+        return `
+          <article class="task">
+            <h4>${id} · ${title}</h4>
+            <div class="task-meta">
+              <span class="status ${statusCls}">${status}</span>
+              <span class="chip blue">${quarter}</span>
+              <span class="chip">${domain}</span>
+              <span class="chip amber">${position}</span>
+              ${certainty ? `<span class="chip green">确定性 ${certainty}/5</span>` : ""}
+              ${effort ? `<span class="chip">预估 ${effort} 人天</span>` : ""}
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function renderQuarterBars() {
+      const max = Math.max(...quarterStats.map(q => q[1]));
+      document.getElementById("quarterBars").innerHTML = quarterStats.map(([name, total, done]) => `
+        <div class="timeline-item">
+          <b>${name}</b>
+          <div class="bar"><i style="width:${Math.max(6, total / max * 100)}%;background:${done ? "var(--green)" : "var(--blue)"}"></i></div>
+          <b>${total}</b>
+        </div>
+      `).join("");
+    }
+
+    function initMetrics() {
+      const supported = compareRows.filter(r => !r[1].includes("不支持")).length;
+      const enhanced = compareRows.filter(r => classify(r)[1] === "better").length;
+      document.getElementById("coverageMetric").textContent = `${supported}/${compareRows.length}`;
+      document.getElementById("advantageMetric").textContent = enhanced;
+      document.getElementById("compareAdvantageMetric").textContent = enhanced;
+    }
+
+    function bindFilters(containerId, renderFn) {
+      document.querySelectorAll(`#${containerId} button`).forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(`#${containerId} button`).forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          renderFn(btn.dataset.filter);
+        });
+      });
+    }
+
+    function updateSideSource(page) {
+      const source = pageSources[page] || pageSources.overview;
+      document.getElementById("sideSourceTitle").textContent = source.title;
+      document.getElementById("sideSourceText").textContent = source.text;
+    }
+
+    function bindPages() {
+      document.querySelectorAll("nav button").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const page = btn.dataset.page;
+          document.querySelectorAll("nav button").forEach(item => item.classList.remove("active"));
+          document.querySelectorAll(".page").forEach(item => item.classList.remove("active"));
+          btn.classList.add("active");
+          document.getElementById(`page-${page}`).classList.add("active");
+          updateSideSource(page);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      });
+    }
+
+    initMetrics();
+    renderValue();
+    renderFeatures();
+    renderDatasets();
+    renderManual();
+    renderCompare();
+    renderRoadmap();
+    renderQuarterBars();
+    renderQA();
+    bindFilters("compareFilters", renderCompare);
+    bindFilters("taskFilters", renderRoadmap);
+    bindPages();
+    updateSideSource("overview");
+  </script>
+</body>
+</html>
